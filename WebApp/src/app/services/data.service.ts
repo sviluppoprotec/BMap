@@ -39,7 +39,7 @@ function basePlantData(): FeatureCollection {
           coordinates: [0, 0],
         },
         properties: {
-          url: 'http://localhost:60977/api/plant',
+          url: '/api/plant',
           tipo: 0,
         },
       }
@@ -57,7 +57,7 @@ let devicesData: FeatureCollection = {
         coordinates: [0, 0],
       },
       properties: {
-        url: 'http://localhost:60977/api/plant',
+        url: '/api/plant',
         tipo: 0,
       },
     },
@@ -244,7 +244,7 @@ export class DataService {
   }
 
   basePlantDataImg$(zoom: number, centerX: number, centerY: number): Observable<any> {
-    return this.httpClient.get(`http://localhost:60977/api/plant?centerX=${centerX}&centerY=${centerY}$zoom=${zoom}`)
+    return this.httpClient.get(`/api/plant?centerX=${centerX}&centerY=${centerY}$zoom=${zoom}`)
   }
 
 }

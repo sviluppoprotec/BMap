@@ -1,5 +1,5 @@
 import { jsDocComment } from '@angular/compiler';
-import { Component, ElementRef, enableProdMode, OnInit, ViewChild } from '@angular/core';
+import { AfterContentInit, Component, ElementRef, enableProdMode, OnInit, ViewChild } from '@angular/core';
 import { DxVectorMapComponent } from 'devextreme-angular';
 
 import * as mapsData from 'devextreme/dist/js/vectormap-data/usa.js';
@@ -32,7 +32,7 @@ export class Type {
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.scss'],
 })
-export class MapComponent {
+export class MapComponent implements AfterContentInit {
   usaMap: any = mapsData.usa;
   devices: FeatureCollection;
   plant: FeatureCollection;
@@ -44,6 +44,9 @@ export class MapComponent {
   tooltipContent: any;
   zoomFactor: number = 1;
   center: number[] = [0, 0];
+  moveWithoutReload = false;
+  forcedX = 0;
+  forcedY = 0;
 
   @ViewChild('map', { static: true }) map: DxVectorMapComponent;
 
@@ -66,8 +69,8 @@ export class MapComponent {
       type: 'FeatureCollection'
     };
     this.setmap();
-    this.roomsData = this.dataFlat.getRoomsData();
-    this.buildingData = this.dataFlat.getBuildingData();
+    // this.roomsData = this.dataFlat.getRoomsData();
+    // this.buildingData = this.dataFlat.getBuildingData();
     this.projection = {
       to(coordinates) {
         return [coordinates[0] / 100, coordinates[1] / 100];
@@ -76,6 +79,12 @@ export class MapComponent {
         return [coordinates[0] * 100, coordinates[1] * 100];
       },
     };
+
+
+  }
+  ngAfterContentInit(): void {
+    // this.forcedX = this.map.center && this.map.center[0];
+    // this.forcedY = this.map.center && this.map.center[1];
   }
 
   setmap() {
@@ -101,18 +110,47 @@ export class MapComponent {
     console.log('zoom', e);
     this.zoomFactor = e.zoomFactor;
 
-    this.plant.features[0].properties.url = `http://localhost:60977/api/plant?centerX=${this.center[0] || 0}&centerY=${this.center[1] || 0}&zoom=${this.zoomFactor}`;
+    this.plant.features[0].properties.url = `/api/plant?centerX=${this.center[0] || 0}&centerY=${this.center[1] || 0}&zoom=${this.zoomFactor}`;
 
     this.plant = JSON.parse(JSON.stringify(this.plant));
   }
 
+  forcePosition() {
+
+    console.log('forcePosition', this.forcedX, this.forcedY);
+    this.plant.features[0].geometry.coordinates = [this.forcedX, this.forcedY];
+    this.plant = JSON.parse(JSON.stringify(this.plant));
+  }
+
   centerChanged(e) {
+
+    console.log('map_b', this.map);
     console.log('center', e);
     this.center = e.center;
-    this.plant.features[0].geometry.coordinates = [-e.center[0], -e.center[1]];
-    this.plant.features[0].properties.url = `http://localhost:60977/api/plant?centerX=${this.center[0] || 0}&centerY=${this.center[1] || 0}&zoom=${this.zoomFactor}`;
+    this.forcedX = e.center[0];
+    this.forcedY = e.center[1];
+
+
+    if (this.moveWithoutReload && this.center[0] != 0 && this.center[1] != 0) {
+      return;
+    }
+
+    const mapHeightPixelY = (this.map['element'] as ElementRef).nativeElement.clientHeight;
+    const mapHeightPixelX = (this.map['element'] as ElementRef).nativeElement.clientWidth;
+    const unitHeght = (mapHeightPixelY / 180) * this.zoomFactor;
+    const unitWidth = (mapHeightPixelX / 360) * this.zoomFactor;
+    const x = (-this.center[0] * unitWidth) / 2;
+    const y = (-this.center[1] * unitHeght) / 2;
+    this.plant.features[0].geometry.coordinates = [e.center[0], e.center[1]];
+
+    console.log('center', x, y);
+    console.log(`/api/plant?centerX=${x || 0}&centerY=${y || 0}&zoom=${this.zoomFactor}`);
+    this.plant.features[0].properties.url = `/api/plant?centerX=${x || 0}&centerY=${y || 0}&zoom=${this.zoomFactor}`;
 
     this.plant = JSON.parse(JSON.stringify(this.plant));
+    // this.center = [0, 0];
+
+    console.log('map_a', this.map);
   }
 
   mapClick(e: any) {

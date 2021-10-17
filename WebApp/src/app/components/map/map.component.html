@@ -11,32 +11,34 @@
     </dx-tree-list>
   </div>
   <div class="map">
-    <dx-vector-map #map id="vector-map" [center]="center" [zoomFactor]="zoomFactor" (onClick)="mapClick($event)"
-      (onCenterChanged)="centerChanged($event)" (onZoomFactorChanged)="zoomFactorChange($event)"
-      [bounds]="[-180, 90, 180, -90]">
-      <dxo-tooltip [enabled]="true" contentTemplate="tooltipContent"></dxo-tooltip>
-      <dxo-loading-indicator [show]="true"></dxo-loading-indicator>
-      <dxi-layer [hoverEnabled]="false" [dataSource]="buildingData" name="building"></dxi-layer>
-      <dxi-layer color="transparent" [dataSource]="roomsData" name="rooms" [borderWidth]="1">
-        <dxo-label [enabled]="true" dataField="name"></dxo-label>
-      </dxi-layer>
-      <dxi-layer [dataSource]="plant" dataField="url" elementType="image" type="marker" [size]="1000">
-        <dxo-label dataField="text">
-          <dxo-font [size]="14"></dxo-font>
-        </dxo-label>
-      </dxi-layer>
-      <dxi-layer [dataSource]="devices" dataField="url" elementType="image" type="marker" [size]="51">
-        <dxo-label dataField="text">
-          <dxo-font [size]="14"></dxo-font>
-        </dxo-label>
-      </dxi-layer>
+    <div><input type="checkbox" [(ngModel)]="moveWithoutReload" />moveWithoutReload</div>
+    <input type="text" [(ngModel)]="forcedX" (change)="forcePosition()" />
+    <input type="text" [(ngModel)]="forcedY" (change)="forcePosition()" />
+    <div>
+      <dx-vector-map #map id="vector-map" [center]="center" [zoomFactor]="zoomFactor" (onClick)="mapClick($event)"
+        (onCenterChanged)="centerChanged($event)" (onZoomFactorChanged)="zoomFactorChange($event)"
+        [bounds]="[-180, 90, 180, -90]">
+        <dxo-tooltip [enabled]="true" contentTemplate="tooltipContent"></dxo-tooltip>
+        <dxo-loading-indicator [show]="true"></dxo-loading-indicator>
+        <dxi-layer [hoverEnabled]="false" [dataSource]="buildingData" name="building"></dxi-layer>
+        <dxi-layer [dataSource]="plant" dataField="url" elementType="image" type="marker" [size]="1200">
+          <dxo-label dataField="text">
+            <dxo-font [size]="14"></dxo-font>
+          </dxo-label>
+        </dxi-layer>
+        <dxi-layer [dataSource]="devices" dataField="url" elementType="image" type="marker" [size]="51">
+          <dxo-label dataField="text">
+            <dxo-font [size]="14"></dxo-font>
+          </dxo-label>
+        </dxi-layer>
 
-      <div *dxTemplate="let info of 'tooltipContent'" class='state-tooltip'>
-        <h4>Punto</h4>
-        <div>
-          {{info | json}}
+        <div *dxTemplate="let info of 'tooltipContent'" class='state-tooltip'>
+          <h4>Punto</h4>
+          <div>
+            {{info | json}}
+          </div>
         </div>
-      </div>
-    </dx-vector-map>
+      </dx-vector-map>
+    </div>
   </div>
 </div>

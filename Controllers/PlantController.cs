@@ -35,15 +35,18 @@ namespace BMap.Web.Controllers
             var context = HttpContext.Current;
             zoom = context.Request.QueryString["zoom"] != null ? Convert.ToDecimal(context.Request.QueryString["zoom"], new CultureInfo("en-US")) : null as decimal?;
             context.Response.ContentType = "image/jpeg";
-            if (zoom.HasValue && zoom.Value != 1)
+            if (zoom.HasValue && zoom.Value > 1)
             {
                 image1 = ResizeImage(image1, (int)(image1.Width * zoom.Value), (int)(image1.Height * zoom.Value));
             }
 
-
-            centerX = context.Request.QueryString["centerX"] != null ? (int)Convert.ToDecimal(context.Request.QueryString["centerX"], new CultureInfo("en-US")) : null as int?;
-            centerY = context.Request.QueryString["centerY"] != null ? (int)Convert.ToDecimal(context.Request.QueryString["centerY"], new CultureInfo("en-US")) : null as int?;
-            if (centerX.HasValue && centerY.HasValue)
+            string centerXStr = context.Request.QueryString["centerX"];
+            string centerYStr = context.Request.QueryString["centerY"];
+            if (centerXStr != null && centerXStr.Contains("e")) centerXStr = "0";
+            if (centerYStr != null && centerYStr.Contains("e")) centerYStr = "0";
+            centerX = centerXStr != null ? (int)Convert.ToDecimal(centerXStr, new CultureInfo("en-US")) : null as int?;
+            centerY = centerYStr != null ? (int)Convert.ToDecimal(centerYStr, new CultureInfo("en-US")) : null as int?;
+            if (centerX.HasValue && centerY.HasValue && zoom.Value > 1)
             {
                 image1 = cropToSquare(image1, oWidth, oHeight, centerX.Value, centerY.Value, zoom.Value);
             }
@@ -63,7 +66,7 @@ namespace BMap.Web.Controllers
                         FileName = "plant.jpg"
                     };
                 result.Content.Headers.ContentType =
-                    new MediaTypeHeaderValue("application/jpg");
+                    new MediaTypeHeaderValue("image/jpg");
 
                 return result;
 
@@ -73,9 +76,31 @@ namespace BMap.Web.Controllers
         public Image ResizeImage(Image originalImage, int newWidth, int newHeight)
         {
             Image.GetThumbnailImageAbort abort = new Image.GetThumbnailImageAbort(ThumbnailCallback);
-            Image resizedImage = originalImage.GetThumbnailImage(newWidth, newHeight, abort, System.IntPtr.Zero);
+            //Image resizedImage = originalImage.GetThumbnailImage(newWidth, newHeight, abort, System.IntPtr.Zero);
 
-            return resizedImage;
+            //return resizedImage;
+
+
+            Image img = null;
+            Image scaledImg = null;
+
+            using (var ms = new MemoryStream())
+            {
+                try
+                {
+                    originalImage.Save(ms, originalImage.RawFormat);
+                    using (MemoryStream stream = new MemoryStream(ms.ToArray()))
+                    {
+                        img = Image.FromStream(stream);
+                        scaledImg = img.GetThumbnailImage(newWidth, newHeight, abort, IntPtr.Zero);
+                        return scaledImg;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return originalImage;
+                }
+            }
         }
 
         private Image cropToSquare(Image originalImage, int dWidth, int dHeight, int centerX, int centerY, decimal zoom)
@@ -90,8 +115,17 @@ namespace BMap.Web.Controllers
             using (Graphics g = Graphics.FromImage(cropped))
             {
                 // Draw the desired area of the original into the graphics object
-                var origX = (int)((oWidth - dWidth) / zoom) + centerX;
-                var origY = (int)((oHeight - dHeight) / zoom) - centerY;
+                var origX = (int)((oWidth / 2) - (dWidth / 2)) - centerX;
+                var origY = (int)((oHeight / 2) - (dHeight / 2)) + centerY;
+
+                if (origX + dWidth > oWidth) origX = oWidth - origX - dWidth;
+                if (origY + dHeight > oHeight) origY = oHeight - origY - dHeight;
+
+                if (origX < 0) origX = 0;
+                if (origY < 0) origY = 0;
+
+
+
                 g.DrawImage(originalImage, new Rectangle(0, 0, dWidth, dHeight), new Rectangle(origX, origY, dWidth, dHeight), GraphicsUnit.Pixel);
                 return cropped;
             }
