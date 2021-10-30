@@ -48,6 +48,10 @@ export class MapComponent implements AfterContentInit {
   forcedX = 0;
   forcedY = 0;
 
+  centerChangedRequested: boolean = false;
+  requestX = 0;
+  requestY = 0;
+
   @ViewChild('map', { static: true }) map: DxVectorMapComponent;
 
   constructor(private service: DataService, private dataFlat: DataFlatService) {
@@ -110,7 +114,7 @@ export class MapComponent implements AfterContentInit {
     console.log('zoom', e);
     this.zoomFactor = e.zoomFactor;
 
-    this.plant.features[0].properties.url = `/api/plant?centerX=${this.center[0] || 0}&centerY=${this.center[1] || 0}&zoom=${this.zoomFactor}`;
+    this.plant.features[0].properties.url = `/api/plant/map?centerX=${this.center[0] || 0}&centerY=${this.center[1] || 0}&zoom=${this.zoomFactor}`;
 
     this.plant = JSON.parse(JSON.stringify(this.plant));
   }
@@ -135,20 +139,38 @@ export class MapComponent implements AfterContentInit {
       return;
     }
 
-    const mapHeightPixelY = (this.map['element'] as ElementRef).nativeElement.clientHeight;
-    const mapHeightPixelX = (this.map['element'] as ElementRef).nativeElement.clientWidth;
-    const unitHeght = (mapHeightPixelY / 180) * this.zoomFactor;
-    const unitWidth = (mapHeightPixelX / 360) * this.zoomFactor;
-    const x = (-this.center[0] * unitWidth) / 2;
-    const y = (-this.center[1] * unitHeght) / 2;
-    this.plant.features[0].geometry.coordinates = [e.center[0], e.center[1]];
+    if (this.centerChangedRequested == true) {
+      console.log('center', this.requestX, this.requestY);
+      console.log(`/api/plant/map?centerX=${this.requestX || 0}&centerY=${this.requestY || 0}&zoom=${this.zoomFactor}`);
+      this.plant.features[0].properties.url = `/api/plant/map?centerX=${this.requestX || 0}&centerY=${this.requestY || 0}&zoom=${this.zoomFactor}`;
 
-    console.log('center', x, y);
-    console.log(`/api/plant?centerX=${x || 0}&centerY=${y || 0}&zoom=${this.zoomFactor}`);
-    this.plant.features[0].properties.url = `/api/plant?centerX=${x || 0}&centerY=${y || 0}&zoom=${this.zoomFactor}`;
+      this.plant = JSON.parse(JSON.stringify(this.plant));
 
-    this.plant = JSON.parse(JSON.stringify(this.plant));
-    // this.center = [0, 0];
+      this.devices.features.forEach(x => {
+        x.geometry.coordinates[0] += this.requestX;
+        x.geometry.coordinates[1] += this.requestY;
+      })
+      this.devices = JSON.parse(JSON.stringify(this.devices));
+    }
+
+    if (this.centerChangedRequested == false) {
+      const mapHeightPixelY = (this.map['element'] as ElementRef).nativeElement.clientHeight;
+      const mapHeightPixelX = (this.map['element'] as ElementRef).nativeElement.clientWidth;
+      const unitHeght = (mapHeightPixelY / 180) * this.zoomFactor;
+      const unitWidth = (mapHeightPixelX / 360) * this.zoomFactor;
+      const x = (-this.center[0] * unitWidth * 0.7);
+      const y = (-this.center[1] * unitHeght * 0.7);
+      // this.plant.features[0].geometry.coordinates = [e.center[0], e.center[1]];
+      this.center = [0, 0];
+      this.requestX += x;
+      this.requestY += y;
+      this.centerChangedRequested = true;
+      return;
+    }
+
+
+    this.centerChangedRequested = false;
+
 
     console.log('map_a', this.map);
   }
@@ -159,7 +181,7 @@ export class MapComponent implements AfterContentInit {
     if (e.target) {
 
     } else {
-      this.addDeviceByClick(e)
+
     }
   }
 

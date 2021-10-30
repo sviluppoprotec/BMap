@@ -157,6 +157,7 @@
     <Compile Include="Areas\HelpPage\SampleGeneration\SampleDirection.cs" />
     <Compile Include="Areas\HelpPage\SampleGeneration\TextSample.cs" />
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
+    <Compile Include="Controllers\DeviceController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\PlantController.cs" />
     <Compile Include="Global.asax.cs">
@@ -198,30 +199,26 @@
     <Content Include="Areas\HelpPage\Views\Help\DisplayTemplates\ApiGroup.cshtml" />
     <Content Include="Areas\HelpPage\Views\Help\Api.cshtml" />
     <Content Include="test.html" />
-    <Content Include="WebApp\.gitignore" />
     <Content Include="WebApp\dist\plan-images\assets\images\VectornMap\allarme.png" />
     <Content Include="WebApp\dist\plan-images\assets\images\VectornMap\antincendio.png" />
     <Content Include="WebApp\dist\plan-images\assets\images\VectornMap\boh.png" />
     <Content Include="WebApp\dist\plan-images\assets\images\VectornMap\esplosivo.png" />
     <Content Include="WebApp\dist\plan-images\assets\images\VectornMap\luce.png" />
+    <Content Include="WebApp\dist\plan-images\dxicons.ttf" />
+    <Content Include="WebApp\dist\plan-images\dxicons.woff" />
+    <Content Include="WebApp\dist\plan-images\dxicons.woff2" />
     <Content Include="WebApp\dist\plan-images\favicon.ico" />
     <Content Include="WebApp\dist\plan-images\index.html" />
     <Content Include="WebApp\dist\plan-images\main.js" />
+    <Content Include="WebApp\dist\plan-images\main.js.map" />
     <Content Include="WebApp\dist\plan-images\polyfills.js" />
+    <Content Include="WebApp\dist\plan-images\polyfills.js.map" />
     <Content Include="WebApp\dist\plan-images\runtime.js" />
+    <Content Include="WebApp\dist\plan-images\runtime.js.map" />
     <Content Include="WebApp\dist\plan-images\styles.js" />
+    <Content Include="WebApp\dist\plan-images\styles.js.map" />
     <Content Include="WebApp\dist\plan-images\vendor.js" />
-    <Content Include="WebApp\e2e\protractor.conf.js" />
-    <Content Include="WebApp\karma.conf.js" />
-    <Content Include="WebApp\src\app\app.component.html" />
-    <Content Include="WebApp\src\app\components\map\map.component.html" />
-    <Content Include="WebApp\src\assets\images\VectornMap\allarme.png" />
-    <Content Include="WebApp\src\assets\images\VectornMap\antincendio.png" />
-    <Content Include="WebApp\src\assets\images\VectornMap\boh.png" />
-    <Content Include="WebApp\src\assets\images\VectornMap\esplosivo.png" />
-    <Content Include="WebApp\src\assets\images\VectornMap\luce.png" />
-    <Content Include="WebApp\src\favicon.ico" />
-    <Content Include="WebApp\src\index.html" />
+    <Content Include="WebApp\dist\plan-images\vendor.js.map" />
     <None Include="Scripts\jquery-3.4.1.intellisense.js" />
     <Content Include="Scripts\jquery-3.4.1.js" />
     <Content Include="Scripts\jquery-3.4.1.min.js" />
@@ -242,32 +239,6 @@
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
-    <Content Include="WebApp\.browserslistrc" />
-    <Content Include="WebApp\.editorconfig" />
-    <Content Include="WebApp\angular.json" />
-    <Content Include="WebApp\e2e\tsconfig.json" />
-    <Content Include="WebApp\package-lock.json" />
-    <Content Include="WebApp\package.json" />
-    <Content Include="WebApp\README.md" />
-    <Content Include="WebApp\src\app\app.component.scss" />
-    <Content Include="WebApp\src\app\components\map\map.component.scss" />
-    <Content Include="WebApp\src\app\data\grande-ll-wgs84.json" />
-    <Content Include="WebApp\src\app\data\grande-ll84.json" />
-    <Content Include="WebApp\src\app\data\grande-nad27-48.ll.json" />
-    <Content Include="WebApp\src\assets\.gitkeep" />
-    <Content Include="WebApp\src\styles.scss" />
-    <Content Include="WebApp\tsconfig.app.json" />
-    <Content Include="WebApp\tsconfig.json" />
-    <Content Include="WebApp\tsconfig.spec.json" />
-    <Content Include="WebApp\tslint.json" />
-    <Content Include="WebApp\dist\plan-images\dxicons.ttf" />
-    <Content Include="WebApp\dist\plan-images\dxicons.woff" />
-    <Content Include="WebApp\dist\plan-images\dxicons.woff2" />
-    <Content Include="WebApp\dist\plan-images\main.js.map" />
-    <Content Include="WebApp\dist\plan-images\polyfills.js.map" />
-    <Content Include="WebApp\dist\plan-images\runtime.js.map" />
-    <Content Include="WebApp\dist\plan-images\styles.js.map" />
-    <Content Include="WebApp\dist\plan-images\vendor.js.map" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
@@ -301,25 +272,6 @@
     <None Include="packages.config" />
     <Content Include="Scripts\jquery-3.4.1.slim.min.map" />
     <Content Include="Scripts\jquery-3.4.1.min.map" />
-  </ItemGroup>
-  <ItemGroup>
-    <TypeScriptCompile Include="WebApp\e2e\src\app.e2e-spec.ts" />
-    <TypeScriptCompile Include="WebApp\e2e\src\app.po.ts" />
-    <TypeScriptCompile Include="WebApp\src\app\app-routing.module.ts" />
-    <TypeScriptCompile Include="WebApp\src\app\app.component.spec.ts" />
-    <TypeScriptCompile Include="WebApp\src\app\app.component.ts" />
-    <TypeScriptCompile Include="WebApp\src\app\app.module.ts" />
-    <TypeScriptCompile Include="WebApp\src\app\components\map\map.component.spec.ts" />
-    <TypeScriptCompile Include="WebApp\src\app\components\map\map.component.ts" />
-    <TypeScriptCompile Include="WebApp\src\app\services\data-flat.service.spec.ts" />
-    <TypeScriptCompile Include="WebApp\src\app\services\data-flat.service.ts" />
-    <TypeScriptCompile Include="WebApp\src\app\services\data.service.spec.ts" />
-    <TypeScriptCompile Include="WebApp\src\app\services\data.service.ts" />
-    <TypeScriptCompile Include="WebApp\src\environments\environment.prod.ts" />
-    <TypeScriptCompile Include="WebApp\src\environments\environment.ts" />
-    <TypeScriptCompile Include="WebApp\src\main.ts" />
-    <TypeScriptCompile Include="WebApp\src\polyfills.ts" />
-    <TypeScriptCompile Include="WebApp\src\test.ts" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />

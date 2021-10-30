@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -18,10 +20,15 @@ namespace BMap.Web.Controllers
         int centerY { get; set; }
         int zoom { get; set; }
     }
+
+
+    [RoutePrefix("api/plant")]
     public class PlantController : ApiController
     {
         // http://localhost:60977/api/plant?zoom=2&centerX=600&centerY=600
-        // GET api/values
+
+        [HttpGet]
+        [Route("map")]
         public HttpResponseMessage Get()
         {
             int? centerX = null;
@@ -73,7 +80,7 @@ namespace BMap.Web.Controllers
             }
         }
 
-        public Image ResizeImage(Image originalImage, int newWidth, int newHeight)
+        private Image ResizeImage(Image originalImage, int newWidth, int newHeight)
         {
             Image.GetThumbnailImageAbort abort = new Image.GetThumbnailImageAbort(ThumbnailCallback);
             //Image resizedImage = originalImage.GetThumbnailImage(newWidth, newHeight, abort, System.IntPtr.Zero);
@@ -136,5 +143,113 @@ namespace BMap.Web.Controllers
         {
             return false;
         }
+
+        [HttpGet]
+        [Route("MapInfo")]
+        public ImageInfo getMapInfo()
+        {
+            Image image1 = Image.FromFile(HttpRuntime.AppDomainAppPath + @"\Maps\Administration Bldg Main-Floor1.jpg");
+            return new ImageInfo
+            {
+                Height = image1.Width,
+                Width = image1.Height
+            };
+
+        }
+
+        [HttpGet]
+        [Route("Devices/{type}")]
+        public FeatureCollection getDevices(int type)
+        {
+            var res = new FeatureCollection();
+            res.type = "FeatureCollection";
+            Feature f1 = new Feature();
+            f1.geometry = new FeatureGeometry()
+            {
+                coordinates = new List<int>() {
+                    500, 500
+                },
+                type = "Feature"
+            };
+            f1.properties = new FeatureProperty()
+            {
+                tipo = 0,
+                url = getImageUrl("luce")
+            };
+            res.features.Add(f1);
+
+            Feature f2 = new Feature();
+            f2.geometry = new FeatureGeometry()
+            {
+                coordinates = new List<int>() {
+                    600, 600
+                },
+                type = "Feature"
+            };
+            f2.properties = new FeatureProperty()
+            {
+                tipo = 0,
+                url = getImageUrl("antincendio")
+            };
+            res.features.Add(f2);
+
+
+            Feature f3 = new Feature();
+            f3.geometry = new FeatureGeometry()
+            {
+                coordinates = new List<int>() {
+                    400, 400
+                },
+                type = "Feature"
+            };
+            f3.properties = new FeatureProperty()
+            {
+                tipo = 0,
+                url = getImageUrl("antincendio")
+            };
+            res.features.Add(f3);
+
+            return res;
+        }
+
+        string getImageUrl(string name)
+        {
+            return $"webapp/src/assets/images/VectornMap/{name}.png";
+        }
+
     }
 }
+
+public class ImageInfo
+{
+    [JsonProperty("width")]
+    public int Width { get; set; }
+    [JsonProperty("height")]
+    public int Height { get; set; }
+}
+
+public class FeatureCollection
+{
+    public string type { get; set; }
+    public List<Feature> features { get; set; }
+}
+
+public class Feature
+{
+    public string type { get; set; }
+    public FeatureProperty properties { get; set; }
+    public FeatureGeometry geometry { get; set; }
+}
+
+public class FeatureProperty
+{
+    public int tipo { get; set; }
+    public string url { get; set; }
+}
+
+public class FeatureGeometry
+{
+    public string type { get; set; }
+    public List<int> coordinates { get; set; }
+}
+
