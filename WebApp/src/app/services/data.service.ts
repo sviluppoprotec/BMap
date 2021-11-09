@@ -239,6 +239,10 @@ export class DataService {
     return devicesData;
   }
 
+  getDevicesData$(type: number, centerX: number, centerY: number, zoom: number): Observable<FeatureCollection> {
+    return this.httpClient.get(`/api/plant/devices/${type}/0/0/${centerX}/${centerY}/${zoom}/`) as Observable<FeatureCollection>;
+  }
+
   basePlantData(zoom: number, centerX: number, centerY: number): FeatureCollection {
     return basePlantData();
   }

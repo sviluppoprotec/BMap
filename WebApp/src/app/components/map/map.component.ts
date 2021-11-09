@@ -3,6 +3,7 @@ import { AfterContentInit, Component, ElementRef, enableProdMode, OnInit, ViewCh
 import { DxVectorMapComponent } from 'devextreme-angular';
 
 import * as mapsData from 'devextreme/dist/js/vectormap-data/usa.js';
+import { Observable, zip } from 'rxjs';
 import {
   DataFlatService,
   FeatureCollection as FeatureCollectionFlat,
@@ -44,6 +45,7 @@ export class MapComponent implements AfterContentInit {
   tooltipContent: any;
   zoomFactor: number = 1;
   center: number[] = [0, 0];
+  selectedIds: number[];
   moveWithoutReload = false;
   forcedX = 0;
   forcedY = 0;
@@ -73,8 +75,7 @@ export class MapComponent implements AfterContentInit {
       type: 'FeatureCollection'
     };
     this.setmap();
-    // this.roomsData = this.dataFlat.getRoomsData();
-    // this.buildingData = this.dataFlat.getBuildingData();
+    
     this.projection = {
       to(coordinates) {
         return [coordinates[0] / 100, coordinates[1] / 100];
@@ -86,13 +87,11 @@ export class MapComponent implements AfterContentInit {
 
 
   }
+
   ngAfterContentInit(): void {
-    // this.forcedX = this.map.center && this.map.center[0];
-    // this.forcedY = this.map.center && this.map.center[1];
   }
 
   setmap() {
-
     this.plant = this.service.basePlantData(0, 0, 0);
     this.plant = JSON.parse(JSON.stringify(this.plant));
 
@@ -100,14 +99,50 @@ export class MapComponent implements AfterContentInit {
   }
 
   selectedDeviceSchanged(e) {
-    const selectedIds = e.selectedRowKeys;
+    console.log('selectedDeviceSchanged', e);
+    this.selectedIds = e.selectedRowKeys;
+    const currSelectedKey = e.currentSelectedRowKeys;
 
-    this.devices.features = this.devicesSnapshot.features.filter(x => {
-      return selectedIds.includes(x.properties.tipo);
-    })
-    this.devices = JSON.parse(JSON.stringify(this.devices));
+    // this.devices.features = this.devicesSnapshot.features.filter(x => {
+    //   return selectedIds.includes(x.properties.tipo);
+    // })
 
-    console.log(this.devices);
+    this.service.getDevicesData$(currSelectedKey, this.requestX, this.requestY, this.zoomFactor).subscribe(x => {
+      x.features.forEach(y => {
+        const geoCoords = this.toGeoUnit(y.geometry.coordinates[0], y.geometry.coordinates[1]);
+        y.geometry.coordinates[0] = geoCoords.x;
+        y.geometry.coordinates[1] = geoCoords.y;
+        this.devices.features.push(y)
+      });
+      this.devices = JSON.parse(JSON.stringify(this.devices));
+      console.log('selectedDeviceSchanged', this.devices);
+    });
+  }
+
+  resetAllDevices() {
+    if(!this.selectedIds || !this.selectedIds.length){
+      return
+    }
+    const list: Observable<FeatureCollection>[] = [];
+    this.selectedIds.forEach(x => {
+      list.push(
+        this.service.getDevicesData$(x, this.requestX, this.requestY, this.zoomFactor));
+    });
+    this.devices.features = [];
+    zip(...list).subscribe(x => {
+      x.forEach(y => {
+        y.features.forEach(z => {
+          const geoCoords = this.toGeoUnit(z.geometry.coordinates[0], z.geometry.coordinates[1]);
+          z.geometry.coordinates[0] = geoCoords.x;
+          z.geometry.coordinates[1] = geoCoords.y;
+          this.devices.features.push(z)
+        });
+      });
+      this.devices = JSON.parse(JSON.stringify(this.devices));
+      console.log('selectedDeviceSchanged', this.devices);
+    });
+
+
   }
 
   zoomFactorChange(e) {
@@ -117,6 +152,7 @@ export class MapComponent implements AfterContentInit {
     this.plant.features[0].properties.url = `/api/plant/map?centerX=${this.center[0] || 0}&centerY=${this.center[1] || 0}&zoom=${this.zoomFactor}`;
 
     this.plant = JSON.parse(JSON.stringify(this.plant));
+    this.devices = JSON.parse(JSON.stringify(this.devices));
   }
 
   forcePosition() {
@@ -131,8 +167,8 @@ export class MapComponent implements AfterContentInit {
     console.log('map_b', this.map);
     console.log('center', e);
     this.center = e.center;
-    this.forcedX = e.center[0];
-    this.forcedY = e.center[1];
+    // this.forcedX = e.center[0];
+    // this.forcedY = e.center[1];
 
 
     if (this.moveWithoutReload && this.center[0] != 0 && this.center[1] != 0) {
@@ -145,34 +181,40 @@ export class MapComponent implements AfterContentInit {
       this.plant.features[0].properties.url = `/api/plant/map?centerX=${this.requestX || 0}&centerY=${this.requestY || 0}&zoom=${this.zoomFactor}`;
 
       this.plant = JSON.parse(JSON.stringify(this.plant));
-
-      this.devices.features.forEach(x => {
-        x.geometry.coordinates[0] += this.requestX;
-        x.geometry.coordinates[1] += this.requestY;
-      })
-      this.devices = JSON.parse(JSON.stringify(this.devices));
+      this.resetAllDevices();
     }
 
     if (this.centerChangedRequested == false) {
-      const mapHeightPixelY = (this.map['element'] as ElementRef).nativeElement.clientHeight;
-      const mapHeightPixelX = (this.map['element'] as ElementRef).nativeElement.clientWidth;
-      const unitHeght = (mapHeightPixelY / 180) * this.zoomFactor;
-      const unitWidth = (mapHeightPixelX / 360) * this.zoomFactor;
-      const x = (-this.center[0] * unitWidth * 0.7);
-      const y = (-this.center[1] * unitHeght * 0.7);
-      // this.plant.features[0].geometry.coordinates = [e.center[0], e.center[1]];
+      const pixelCoords = this.toPixelUnit();
       this.center = [0, 0];
-      this.requestX += x;
-      this.requestY += y;
+      this.requestX += pixelCoords.x;
+      this.requestY += pixelCoords.y;
       this.centerChangedRequested = true;
       return;
     }
 
-
     this.centerChangedRequested = false;
-
-
     console.log('map_a', this.map);
+  }
+
+  toPixelUnit(): { x: number; y: number } {
+    const mapHeightPixelY = (this.map['element'] as ElementRef).nativeElement.clientHeight;
+    const mapHeightPixelX = (this.map['element'] as ElementRef).nativeElement.clientWidth;
+    const unitHeght = (mapHeightPixelY / 180) * this.zoomFactor;
+    const unitWidth = (mapHeightPixelX / 360) * this.zoomFactor;
+    const x = (-this.center[0] * unitWidth * 0.7);
+    const y = (-this.center[1] * unitHeght * 0.7);
+    return { x, y }
+  }
+
+  toGeoUnit(xPixel: number, yPixel: number): { x: number; y: number } {
+    const mapHeightPixelY = (this.map['element'] as ElementRef).nativeElement.clientHeight;
+    const mapHeightPixelX = (this.map['element'] as ElementRef).nativeElement.clientWidth;
+    const unitHeght = (mapHeightPixelY / 180) * this.zoomFactor;
+    const unitWidth = (mapHeightPixelX / 360) * this.zoomFactor;
+    const x = ((xPixel - (mapHeightPixelX / 2)) / unitWidth);
+    const y = ((yPixel - (mapHeightPixelY / 2)) / unitHeght);
+    return { x, y }
   }
 
   mapClick(e: any) {

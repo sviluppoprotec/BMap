@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -125,8 +126,14 @@ namespace BMap.Web.Controllers
                 var origX = (int)((oWidth / 2) - (dWidth / 2)) - centerX;
                 var origY = (int)((oHeight / 2) - (dHeight / 2)) + centerY;
 
-                if (origX + dWidth > oWidth) origX = oWidth - origX - dWidth;
-                if (origY + dHeight > oHeight) origY = oHeight - origY - dHeight;
+                if (origX + dWidth > oWidth)
+                {
+                    origX = oWidth - dWidth ;
+                }
+                if (origY + dHeight > oHeight)
+                {
+                    origY = oHeight - dHeight;
+                }
 
                 if (origX < 0) origX = 0;
                 if (origY < 0) origY = 0;
@@ -158,64 +165,117 @@ namespace BMap.Web.Controllers
         }
 
         [HttpGet]
-        [Route("Devices/{type}")]
-        public FeatureCollection getDevices(int type)
+        [Route("Devices/{type}/{width}/{height}/{centerX}/{centerY}/{zoom}")]
+        public FeatureCollection getDevices(int type, int width = 0, int height = 0, decimal centerX = 0, decimal centerY = 0, decimal zoom = 0)
         {
+            ImageInfo imgInfo = getMapInfo();
+
+            List<Feature> l = new List<Feature>();
             var res = new FeatureCollection();
             res.type = "FeatureCollection";
             Feature f1 = new Feature();
+            f1.type = "Feature";
             f1.geometry = new FeatureGeometry()
             {
                 coordinates = new List<int>() {
-                    500, 500
+                    600, 350
                 },
                 type = "Feature"
             };
             f1.properties = new FeatureProperty()
             {
-                tipo = 0,
+                tipo = 1,
                 url = getImageUrl("luce")
             };
-            res.features.Add(f1);
+            l.Add(f1);
 
             Feature f2 = new Feature();
+            f2.type = "Feature";
             f2.geometry = new FeatureGeometry()
             {
                 coordinates = new List<int>() {
-                    600, 600
+                    800, 450
                 },
                 type = "Feature"
             };
             f2.properties = new FeatureProperty()
             {
-                tipo = 0,
+                tipo = 2,
                 url = getImageUrl("antincendio")
             };
-            res.features.Add(f2);
+            l.Add(f2);
 
 
             Feature f3 = new Feature();
+            f3.type = "Feature";
             f3.geometry = new FeatureGeometry()
             {
                 coordinates = new List<int>() {
-                    400, 400
+                    400, 250
                 },
                 type = "Feature"
             };
             f3.properties = new FeatureProperty()
             {
-                tipo = 0,
+                tipo = 3,
                 url = getImageUrl("antincendio")
             };
-            res.features.Add(f3);
+            l.Add(f3);
+            var filtered = l.Where(i => i.properties.tipo == type);
+
+            res.features = filtered.ToList();
+            if (zoom > 1)
+            {
+                res.features = GetImageBox(res.features, centerX, centerY, zoom);
+            }
+            return res;
+        }
+
+        List<Feature> GetImageBox(List<Feature> l, decimal centerX = 0, decimal centerY = 0, decimal zoom = 0)
+        {
+            var dimensions = getMapInfo();
+            int oWidth = dimensions.Width;
+            int oHeight = dimensions.Height;
+            decimal dWidth = dimensions.Width * zoom;
+            decimal dHeight = dimensions.Height * zoom;
+
+            // Draw the desired area of the original into the graphics object
+            var origX = (int)((oWidth / 2) - (dWidth / 2)) - centerX;
+            var origY = (int)((oHeight / 2) - (dHeight / 2)) + centerY;
+
+            if (origX + dWidth > oWidth)
+            {
+                origX = oWidth - origX - dWidth;
+            }
+            if (origY + dHeight > oHeight)
+            {
+                origY = oHeight - origY - dHeight;
+            }
+
+            if (origX < 0) origX = 0;
+            if (origY < 0) origY = 0;
+
+            var res = l.Where(f => f.geometry.coordinates[0] > origX
+                && f.geometry.coordinates[0] < origX + dimensions.Width
+                && f.geometry.coordinates[1] > origY
+                && f.geometry.coordinates[1] < origY + dimensions.Height).ToList();
+
+            res.ForEach(x =>
+            {
+                x.geometry.coordinates[0] += (int)centerX;
+                x.geometry.coordinates[1] += (int)centerY;
+            });
 
             return res;
+
         }
 
         string getImageUrl(string name)
         {
             return $"webapp/src/assets/images/VectornMap/{name}.png";
         }
+
+
 
     }
 }
